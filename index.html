@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starward Defenders</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="titlebar">
+      <div>
+        <h1 class="title">Starward Defenders</h1>
+        <p class="subtitle">A browser tribute to the 1970s arcade invasion, rebuilt with 10 escalating stages.</p>
+      </div>
+      <button id="startButton" type="button">Start Mission</button>
+    </header>
+
+    <section class="hud">
+      <article class="card">
+        <span class="label">Score</span>
+        <span class="value" id="scoreValue">0</span>
+      </article>
+      <article class="card">
+        <span class="label">Stage</span>
+        <span class="value" id="stageValue">1 / 10</span>
+      </article>
+      <article class="card">
+        <span class="label">Lives</span>
+        <span class="value" id="livesValue">3</span>
+      </article>
+      <article class="card">
+        <span class="label">Best</span>
+        <span class="value" id="bestValue">0</span>
+      </article>
+    </section>
+
+    <section class="arena">
+      <canvas id="gameCanvas" width="900" height="600" aria-label="Space shooter playfield"></canvas>
+
+      <div class="overlay" id="introOverlay">
+        <div class="panel">
+          <h2>Hold The Sky</h2>
+          <p>
+            Move your starfighter, break incoming formations, and survive ten increasingly aggressive waves.
+            Each stage adds pressure through faster ranks, denser fleets, sharper enemy fire, and less room for mistakes.
+          </p>
+          <div class="pill-row">
+            <span class="pill">Move: Arrow Keys / A D</span>
+            <span class="pill">Fire: Space</span>
+            <span class="pill">Touch: On-screen controls</span>
+          </div>
+          <div class="actions">
+            <button id="launchButton" type="button">Launch</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="stageOverlay">
+        <div class="panel">
+          <h2 id="stageOverlayTitle">Stage Cleared</h2>
+          <p id="stageOverlayText"></p>
+          <div class="actions">
+            <button id="continueButton" type="button">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="overlay hidden" id="diplomaOverlay">
+        <div class="panel diploma">
+          <h2>Defense Academy Diploma</h2>
+          <p id="diplomaMessage">Your campaign has concluded.</p>
+          <div class="rank" id="rankValue">Cadet</div>
+          <div class="diploma-metrics" id="diplomaMetrics"></div>
+          <div class="actions">
+            <button id="restartButton" type="button">Play Again</button>
+            <button id="printButton" type="button" class="secondary">Print Diploma</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="touch-controls" aria-label="Touch controls">
+      <button id="leftButton" type="button">Left</button>
+      <button id="fireButton" type="button" class="secondary">Fire</button>
+      <button id="rightButton" type="button">Right</button>
+    </section>
+
+    <footer class="footerbar">
+      <span id="statusLine">Press Start Mission to begin the defense.</span>
+      <span>Inspired by the timeless arcade march, rebuilt as an original tribute.</span>
+    </footer>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
