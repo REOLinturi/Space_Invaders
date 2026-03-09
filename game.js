@@ -71,7 +71,7 @@ const state = {
 bestValue.textContent = state.bestScore;
 
 function getBaseLineY() {
-  return WORLD.height - 22;
+  return WORLD.height - 6;
 }
 
 function getCitadelRect() {
@@ -396,8 +396,7 @@ function updateEnemies(dt) {
     }
   }
 
-  const citadel = getCitadelRect();
-  if (livingEnemies.some((enemy) => enemy.y + enemy.height >= getBaseLineY() || overlaps(enemy, citadel))) {
+  if (livingEnemies.some((enemy) => enemy.y + enemy.height >= getBaseLineY())) {
     finishCampaign(false);
     return;
   }
@@ -985,3 +984,5 @@ renderDiploma({
 });
 syncHud();
 render();
+
+

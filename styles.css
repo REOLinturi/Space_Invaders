@@ -19,13 +19,14 @@ body {
   min-height: 100vh;
   display: grid;
   place-items: center;
+  padding: 18px 0;
   background:
     radial-gradient(circle at top, rgba(127, 255, 212, 0.12), transparent 30%),
     radial-gradient(circle at bottom, rgba(255, 207, 90, 0.1), transparent 22%),
     linear-gradient(180deg, #040913 0%, #07111f 48%, #040913 100%);
   color: var(--ink);
   font-family: "Trebuchet MS", "Gill Sans", sans-serif;
-  overflow: hidden;
+  overflow: auto;
 }
 
 body::before {
@@ -103,7 +104,7 @@ body::before {
 .arena {
   position: relative;
   border-radius: 24px;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid rgba(127, 255, 212, 0.2);
   background:
     radial-gradient(circle at 50% 15%, rgba(127, 255, 212, 0.08), transparent 32%),
@@ -121,9 +122,10 @@ canvas {
   position: absolute;
   inset: 0;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 24px;
+  padding: 18px;
+  overflow-y: auto;
   background: rgba(3, 7, 15, 0.74);
   text-align: center;
 }
@@ -132,8 +134,9 @@ canvas {
   display: none;
 }
 
-.panel {
+ .panel {
   width: min(100%, 700px);
+  max-height: calc(100% - 4px);
   padding: 26px;
   border-radius: 24px;
   border: 1px solid rgba(127, 255, 212, 0.24);
@@ -231,7 +234,7 @@ button:active {
 
 .diploma {
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid rgba(255, 207, 90, 0.28);
   background:
     radial-gradient(circle at top right, rgba(255, 207, 90, 0.12), transparent 34%),
@@ -267,7 +270,7 @@ button:active {
 
 #diplomaCanvas {
   width: 100%;
-  max-width: 560px;
+  max-width: 500px;
   margin: 0 auto 8px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -304,3 +307,5 @@ button:active {
     padding: 20px;
   }
 }
+
+
