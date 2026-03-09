@@ -1,5 +1,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const diplomaCanvas = document.getElementById("diplomaCanvas");
+const diplomaCtx = diplomaCanvas.getContext("2d");
 
 const introOverlay = document.getElementById("introOverlay");
 const stageOverlay = document.getElementById("stageOverlay");
@@ -10,6 +12,7 @@ const diplomaMessage = document.getElementById("diplomaMessage");
 const diplomaMetrics = document.getElementById("diplomaMetrics");
 const rankValue = document.getElementById("rankValue");
 const statusLine = document.getElementById("statusLine");
+const copyStatus = document.getElementById("copyStatus");
 
 const scoreValue = document.getElementById("scoreValue");
 const stageValue = document.getElementById("stageValue");
@@ -57,17 +60,35 @@ const state = {
   particles: [],
   enemies: [],
   shields: [],
-  formation: null
+  formation: null,
+  lastDiplomaRecord: null,
+  audio: {
+    ctx: null,
+    enabled: false
+  }
 };
 
 bestValue.textContent = state.bestScore;
+
+function getBaseLineY() {
+  return WORLD.height - 22;
+}
+
+function getCitadelRect() {
+  return {
+    x: 0,
+    y: WORLD.height - 52,
+    width: WORLD.width,
+    height: 52
+  };
+}
 
 function createPlayer() {
   state.player = {
     width: 48,
     height: 24,
     x: WORLD.width / 2 - 24,
-    y: WORLD.height - 52,
+    y: WORLD.height - 76,
     speed: 320,
     cooldown: 0,
     invulnerable: 0
@@ -84,7 +105,7 @@ function createShields(count) {
   for (let i = 0; i < count; i += 1) {
     shields.push({
       x: gap * (i + 1) - 40,
-      y: WORLD.height - 150,
+      y: WORLD.height - 174,
       width: 80,
       height: 44,
       health: 14
@@ -154,14 +175,19 @@ function resetCampaign() {
   state.shotsFired = 0;
   state.shotsHit = 0;
   state.enemiesDestroyed = 0;
+  state.lastDiplomaRecord = null;
   state.mode = "playing";
   introOverlay.classList.add("hidden");
   stageOverlay.classList.add("hidden");
   diplomaOverlay.classList.add("hidden");
+  copyStatus.textContent = "Generate a record and copy the diploma image to share it.";
   createPlayer();
   buildStage(state.stage);
   syncHud();
+  ensureAudio();
+  playSound("start");
 }
+
 function startLoop() {
   if (!state.running) {
     state.running = true;
@@ -237,6 +263,7 @@ function updatePlayer(dt) {
     });
     player.cooldown = 0.32;
     state.shotsFired += 1;
+    playSound("shoot");
   }
 }
 
@@ -267,6 +294,7 @@ function handleBulletCollisions() {
       state.enemiesDestroyed += 1;
       state.shotsHit += 1;
       spawnBurst(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, "#7fffd4", 12);
+      playSound("enemyDown");
       break;
     }
 
@@ -309,6 +337,7 @@ function handleBulletCollisions() {
 
 function hitPlayer() {
   spawnBurst(state.player.x + state.player.width / 2, state.player.y + state.player.height / 2, "#ff6b6b", 18);
+  playSound("hit");
   state.lives -= 1;
   syncHud();
 
@@ -321,6 +350,7 @@ function hitPlayer() {
   state.player.invulnerable = 2;
   statusLine.textContent = "Hull breach. " + state.lives + " lives remaining.";
 }
+
 function updateEnemies(dt) {
   const livingEnemies = state.enemies.filter((enemy) => enemy.alive);
   if (!livingEnemies.length) {
@@ -366,7 +396,8 @@ function updateEnemies(dt) {
     }
   }
 
-  if (livingEnemies.some((enemy) => enemy.y + enemy.height >= state.player.y - 10)) {
+  const citadel = getCitadelRect();
+  if (livingEnemies.some((enemy) => enemy.y + enemy.height >= getBaseLineY() || overlaps(enemy, citadel))) {
     finishCampaign(false);
     return;
   }
@@ -435,6 +466,7 @@ function checkStageState() {
   stageOverlayText.textContent = "Score locked at " + state.score + ". Next: Stage " + (state.stage + 1) + ". " + levelConfigs[state.stage].desc;
   stageOverlay.classList.remove("hidden");
   statusLine.textContent = "Stage " + state.stage + " cleared.";
+  playSound("stageClear");
 }
 
 function advanceStage() {
@@ -456,12 +488,6 @@ function finishCampaign(victory) {
   const accuracy = state.shotsFired ? Math.round((state.shotsHit / state.shotsFired) * 100) : 0;
   const stageReached = victory ? 10 : Math.max(0, state.stage - 1);
   const rank = getRank(victory, state.score, accuracy, stageReached);
-  diplomaMessage.textContent = victory
-    ? "All ten stages held. The academy recognizes your defense record."
-    : "The defense line fell during stage " + state.stage + ". Your campaign record has been archived.";
-  rankValue.textContent = rank;
-  diplomaMetrics.replaceChildren();
-
   const metrics = [
     ["Final Score", state.score],
     ["Stages Cleared", (victory ? 10 : stageReached) + " / 10"],
@@ -469,6 +495,12 @@ function finishCampaign(victory) {
     ["Accuracy", accuracy + "%"],
     ["Best Score", state.bestScore]
   ];
+
+  diplomaMessage.textContent = victory
+    ? "All ten stages held. The academy recognizes your defense record."
+    : "The citadel fell during stage " + state.stage + ". Your campaign record has been archived.";
+  rankValue.textContent = rank;
+  diplomaMetrics.replaceChildren();
 
   for (const [label, value] of metrics) {
     const item = document.createElement("div");
@@ -480,10 +512,14 @@ function finishCampaign(victory) {
     diplomaMetrics.appendChild(item);
   }
 
+  state.lastDiplomaRecord = { victory, accuracy, stageReached, rank, metrics };
+  renderDiploma(state.lastDiplomaRecord);
+  copyStatus.textContent = "Diploma image ready. Use Copy Diploma Image to place it on your clipboard.";
   diplomaOverlay.classList.remove("hidden");
   stageOverlay.classList.add("hidden");
   introOverlay.classList.add("hidden");
   statusLine.textContent = victory ? "Campaign complete. Diploma issued." : "Campaign ended. Diploma issued.";
+  playSound(victory ? "victory" : "loss");
 }
 
 function getRank(victory, score, accuracy, stageReached) {
@@ -531,9 +567,11 @@ function overlaps(a, b) {
     a.y < b.y + b.height &&
     a.y + a.height > b.y;
 }
+
 function render() {
   ctx.clearRect(0, 0, WORLD.width, WORLD.height);
   drawStars();
+  drawCitadel();
   drawShields();
   drawBullets();
   drawEnemies();
@@ -547,6 +585,22 @@ function drawStars() {
   for (const star of stars) {
     ctx.fillRect(star.x, star.y, star.size, star.size);
   }
+}
+
+function drawCitadel() {
+  const base = getCitadelRect();
+  ctx.save();
+  ctx.fillStyle = "rgba(9, 25, 38, 0.98)";
+  ctx.fillRect(base.x, base.y, base.width, base.height);
+  ctx.fillStyle = "rgba(127, 255, 212, 0.18)";
+  ctx.fillRect(base.x, base.y, base.width, 10);
+  ctx.fillStyle = "rgba(255, 207, 90, 0.16)";
+  for (let i = 0; i < 9; i += 1) {
+    ctx.fillRect(i * 110 + 22, base.y + 18, 66, 20);
+  }
+  ctx.fillStyle = "#7fffd4";
+  ctx.fillRect(0, getBaseLineY(), WORLD.width, 4);
+  ctx.restore();
 }
 
 function drawPlayer() {
@@ -647,11 +701,128 @@ function drawStageBanner() {
   ctx.restore();
 }
 
+function renderDiploma(record) {
+  const width = diplomaCanvas.width;
+  const height = diplomaCanvas.height;
+  const parchment = diplomaCtx.createLinearGradient(0, 0, 0, height);
+  parchment.addColorStop(0, "#f5e9bc");
+  parchment.addColorStop(1, "#dcc689");
+
+  diplomaCtx.clearRect(0, 0, width, height);
+  diplomaCtx.fillStyle = parchment;
+  diplomaCtx.fillRect(0, 0, width, height);
+
+  diplomaCtx.strokeStyle = "rgba(90, 58, 16, 0.42)";
+  diplomaCtx.lineWidth = 4;
+  diplomaCtx.strokeRect(20, 20, width - 40, height - 40);
+  diplomaCtx.lineWidth = 2;
+  diplomaCtx.strokeRect(38, 38, width - 76, height - 76);
+
+  drawDiplomaArt(width, height, record.victory);
+
+  diplomaCtx.fillStyle = "#412711";
+  diplomaCtx.textAlign = "center";
+  diplomaCtx.font = "700 26px Georgia";
+  diplomaCtx.fillText("Defense Academy Diploma", width / 2, 74);
+  diplomaCtx.font = "18px Georgia";
+  diplomaCtx.fillText("Awarded for the Starward Defenders campaign", width / 2, 106);
+
+  diplomaCtx.font = "700 44px Georgia";
+  diplomaCtx.fillText(record.rank, width / 2, 164);
+  diplomaCtx.font = "18px Georgia";
+  diplomaCtx.fillText(record.victory ? "For holding all ten stages against the invading fleet" : "For gallantry under overwhelming invasion pressure", width / 2, 198);
+
+  diplomaCtx.textAlign = "left";
+  diplomaCtx.font = "700 22px Georgia";
+  diplomaCtx.fillText("Campaign Record", 92, 376);
+
+  diplomaCtx.font = "18px Georgia";
+  let metricY = 416;
+  for (const [label, value] of record.metrics) {
+    diplomaCtx.fillStyle = "#5f4023";
+    diplomaCtx.fillText(label, 92, metricY);
+    diplomaCtx.fillStyle = "#1b2438";
+    diplomaCtx.fillText(String(value), 334, metricY);
+    metricY += 34;
+  }
+
+  diplomaCtx.fillStyle = "#412711";
+  diplomaCtx.font = "italic 18px Georgia";
+  diplomaCtx.fillText("Signed on the orbital defense grid", 92, 584);
+  diplomaCtx.textAlign = "right";
+  diplomaCtx.font = "700 22px Georgia";
+  diplomaCtx.fillText("Commandant Aster Vale", width - 92, 584);
+}
+
+function drawDiplomaArt(width, height, victory) {
+  const sky = diplomaCtx.createLinearGradient(0, 0, width, 0);
+  sky.addColorStop(0, "rgba(28, 43, 70, 0.88)");
+  sky.addColorStop(1, "rgba(58, 88, 124, 0.82)");
+  diplomaCtx.fillStyle = sky;
+  diplomaCtx.fillRect(520, 224, 344, 272);
+
+  diplomaCtx.fillStyle = "rgba(255, 255, 255, 0.8)";
+  for (let i = 0; i < 34; i += 1) {
+    const x = 542 + (i * 47) % 300;
+    const y = 246 + (i * 61) % 210;
+    const size = 1 + (i % 3);
+    diplomaCtx.fillRect(x, y, size, size);
+  }
+
+  const planet = diplomaCtx.createRadialGradient(688, 330, 18, 688, 330, 86);
+  planet.addColorStop(0, victory ? "#ffe4a6" : "#ffb69c");
+  planet.addColorStop(1, victory ? "#d9874e" : "#9e4d42");
+  diplomaCtx.fillStyle = planet;
+  diplomaCtx.beginPath();
+  diplomaCtx.arc(688, 330, 86, 0, Math.PI * 2);
+  diplomaCtx.fill();
+
+  diplomaCtx.strokeStyle = "rgba(255, 229, 176, 0.78)";
+  diplomaCtx.lineWidth = 10;
+  diplomaCtx.beginPath();
+  diplomaCtx.ellipse(688, 330, 120, 30, -0.18, 0, Math.PI * 2);
+  diplomaCtx.stroke();
+
+  diplomaCtx.fillStyle = "#7fffd4";
+  diplomaCtx.beginPath();
+  diplomaCtx.moveTo(622, 428);
+  diplomaCtx.lineTo(726, 456);
+  diplomaCtx.lineTo(670, 392);
+  diplomaCtx.closePath();
+  diplomaCtx.fill();
+  diplomaCtx.fillStyle = "#ffcf5a";
+  diplomaCtx.fillRect(666, 404, 12, 46);
+
+  drawLaurel(114, 196, false);
+  drawLaurel(width - 114, 196, true);
+}
+
+function drawLaurel(x, y, mirrored) {
+  diplomaCtx.save();
+  diplomaCtx.translate(x, y);
+  diplomaCtx.scale(mirrored ? -1 : 1, 1);
+  diplomaCtx.strokeStyle = "#7a5a1a";
+  diplomaCtx.lineWidth = 4;
+  diplomaCtx.beginPath();
+  diplomaCtx.moveTo(0, 0);
+  diplomaCtx.quadraticCurveTo(18, 72, 10, 156);
+  diplomaCtx.stroke();
+  for (let i = 0; i < 7; i += 1) {
+    const yy = 18 + i * 20;
+    diplomaCtx.fillStyle = i % 2 === 0 ? "#6a9850" : "#88b765";
+    diplomaCtx.beginPath();
+    diplomaCtx.ellipse(18, yy, 18, 8, -0.6, 0, Math.PI * 2);
+    diplomaCtx.fill();
+  }
+  diplomaCtx.restore();
+}
+
 function bindHold(buttonId, keyName) {
   const button = document.getElementById(buttonId);
   const activate = (event) => {
     event.preventDefault();
     pointer[keyName] = true;
+    ensureAudio();
   };
   const deactivate = (event) => {
     event.preventDefault();
@@ -663,9 +834,104 @@ function bindHold(buttonId, keyName) {
   button.addEventListener("pointercancel", deactivate);
 }
 
-bindHold("leftButton", "left");
-bindHold("rightButton", "right");
-bindHold("fireButton", "fire");
+function ensureAudio() {
+  if (state.audio.enabled) {
+    if (state.audio.ctx && state.audio.ctx.state === "suspended") {
+      state.audio.ctx.resume().catch(() => {});
+    }
+    return;
+  }
+
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtor) {
+    return;
+  }
+
+  state.audio.ctx = new AudioCtor();
+  state.audio.enabled = true;
+}
+
+function tone(freq, type, duration, gainValue, startOffset, slideTo) {
+  if (!state.audio.enabled || !state.audio.ctx) {
+    return;
+  }
+
+  const audioCtx = state.audio.ctx;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  const startTime = audioCtx.currentTime + (startOffset || 0);
+  const endTime = startTime + duration;
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, startTime);
+  if (slideTo) {
+    osc.frequency.exponentialRampToValueAtTime(slideTo, endTime);
+  }
+
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, endTime);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(startTime);
+  osc.stop(endTime + 0.02);
+}
+
+function playSound(kind) {
+  if (!state.audio.enabled || !state.audio.ctx) {
+    return;
+  }
+
+  if (kind === "shoot") {
+    tone(660, "square", 0.08, 0.032, 0, 880);
+  } else if (kind === "enemyDown") {
+    tone(220, "sawtooth", 0.14, 0.038, 0, 90);
+  } else if (kind === "hit") {
+    tone(180, "triangle", 0.26, 0.05, 0, 60);
+  } else if (kind === "stageClear") {
+    tone(392, "triangle", 0.18, 0.03, 0, 494);
+    tone(494, "triangle", 0.18, 0.03, 0.12, 587);
+    tone(587, "triangle", 0.28, 0.032, 0.24, 784);
+  } else if (kind === "victory") {
+    tone(523.25, "triangle", 0.2, 0.032, 0, 659.25);
+    tone(659.25, "triangle", 0.2, 0.032, 0.14, 783.99);
+    tone(783.99, "triangle", 0.44, 0.036, 0.28, 1046.5);
+  } else if (kind === "loss") {
+    tone(220, "sawtooth", 0.18, 0.03, 0, 164.81);
+    tone(164.81, "sawtooth", 0.22, 0.03, 0.16, 123.47);
+    tone(123.47, "triangle", 0.32, 0.03, 0.34, 82.41);
+  } else if (kind === "start") {
+    tone(329.63, "triangle", 0.12, 0.026, 0, 392);
+    tone(392, "triangle", 0.16, 0.026, 0.1, 523.25);
+  }
+}
+
+async function copyDiplomaImage() {
+  if (!state.lastDiplomaRecord) {
+    copyStatus.textContent = "Finish a run first so the diploma can be rendered.";
+    return;
+  }
+
+  if (!navigator.clipboard || typeof navigator.clipboard.write !== "function" || typeof ClipboardItem === "undefined") {
+    copyStatus.textContent = "This browser cannot copy images to the clipboard. Try the GitHub Pages version over HTTPS.";
+    return;
+  }
+
+  const blob = await new Promise((resolve) => diplomaCanvas.toBlob(resolve, "image/png"));
+  if (!blob) {
+    copyStatus.textContent = "The diploma image could not be generated.";
+    return;
+  }
+
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    copyStatus.textContent = "Diploma image copied. You can paste it into email, chat, or documents.";
+    playSound("stageClear");
+  } catch (error) {
+    copyStatus.textContent = "Copy failed. Your browser may require a secure page or clipboard permission.";
+  }
+}
 
 document.addEventListener("keydown", (event) => {
   if (event.code === "ArrowLeft" || event.code === "KeyA") {
@@ -677,6 +943,7 @@ document.addEventListener("keydown", (event) => {
   if (event.code === "Space") {
     event.preventDefault();
     keys.fire = true;
+    ensureAudio();
   }
 });
 
@@ -692,6 +959,10 @@ document.addEventListener("keyup", (event) => {
   }
 });
 
+bindHold("leftButton", "left");
+bindHold("rightButton", "right");
+bindHold("fireButton", "fire");
+
 function startGame() {
   resetCampaign();
   startLoop();
@@ -701,10 +972,16 @@ document.getElementById("startButton").addEventListener("click", startGame);
 document.getElementById("launchButton").addEventListener("click", startGame);
 document.getElementById("continueButton").addEventListener("click", advanceStage);
 document.getElementById("restartButton").addEventListener("click", startGame);
-document.getElementById("printButton").addEventListener("click", () => window.print());
+document.getElementById("copyButton").addEventListener("click", () => {
+  ensureAudio();
+  copyDiplomaImage();
+});
 
 createPlayer();
+renderDiploma({
+  victory: true,
+  rank: "Cadet",
+  metrics: [["Final Score", 0], ["Stages Cleared", "0 / 10"], ["Enemies Defeated", 0], ["Accuracy", "0%"], ["Best Score", state.bestScore]]
+});
 syncHud();
 render();
-
-
