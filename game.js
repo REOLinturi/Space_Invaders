@@ -512,9 +512,18 @@ function updateEnemies(dt) {
   }
 
   const lowestEnemyBottom = Math.max(...livingEnemies.map((enemy) => enemy.y + enemy.height));
-  if (state.stageIntroGrace <= 0 && lowestEnemyBottom >= getBaseLineY()) {
+  const formationBottom = Math.max(...livingEnemies.map((enemy) => enemy.baseY + enemy.height));
+  if (state.stageIntroGrace <= 0 && formationBottom >= getBaseLineY()) {
     state.lastDefeatReason = "citadel-breached";
-    console.warn("Campaign ended", { reason: state.lastDefeatReason, stage: state.stage, lives: state.lives, lowestEnemyBottom, baseline: getBaseLineY(), grace: state.stageIntroGrace });
+    console.warn("Campaign ended", {
+      reason: state.lastDefeatReason,
+      stage: state.stage,
+      lives: state.lives,
+      lowestEnemyBottom,
+      formationBottom,
+      baseline: getBaseLineY(),
+      grace: state.stageIntroGrace
+    });
     finishCampaign(false);
     return;
   }
