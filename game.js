@@ -247,6 +247,7 @@ function buildStage(stageNumber) {
       state.enemies.push({
         x: startX + col * spacingX,
         y: startY + row * spacingY,
+        baseX: startX + col * spacingX,
         baseY: startY + row * spacingY,
         width: cfg.enemySize,
         height: cfg.enemySize * 0.7,
@@ -481,7 +482,8 @@ function updateEnemies(dt) {
   }
 
   for (const enemy of livingEnemies) {
-    enemy.x += horizontalSpeed * dt;
+    enemy.baseX += horizontalSpeed * dt;
+    enemy.x = enemy.baseX;
     enemy.y = enemy.baseY;
 
     if (formation.move === "sway" || formation.move === "storm") {
@@ -497,7 +499,7 @@ function updateEnemies(dt) {
     }
   }
 
-  const bounds = getEnemyBounds(livingEnemies);
+  const bounds = getEnemyBounds(livingEnemies, "baseX");
   if (bounds.minX <= 16 || bounds.maxX >= WORLD.width - 16) {
     const correction = bounds.minX <= 16
       ? 16 - bounds.minX
@@ -505,6 +507,7 @@ function updateEnemies(dt) {
 
     formation.direction *= -1;
     for (const enemy of livingEnemies) {
+      enemy.baseX += correction;
       enemy.x += correction;
       enemy.baseY += formation.drop;
       enemy.y += formation.drop;
@@ -569,10 +572,11 @@ function pickShooter(livingEnemies) {
   return frontline[Math.floor(Math.random() * frontline.length)];
 }
 
-function getEnemyBounds(enemies) {
+function getEnemyBounds(enemies, positionKey = "x") {
   return enemies.reduce((acc, enemy) => {
-    acc.minX = Math.min(acc.minX, enemy.x);
-    acc.maxX = Math.max(acc.maxX, enemy.x + enemy.width);
+    const x = enemy[positionKey] ?? enemy.x;
+    acc.minX = Math.min(acc.minX, x);
+    acc.maxX = Math.max(acc.maxX, x + enemy.width);
     return acc;
   }, { minX: Infinity, maxX: -Infinity });
 }
