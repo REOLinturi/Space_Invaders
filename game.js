@@ -499,8 +499,13 @@ function updateEnemies(dt) {
 
   const bounds = getEnemyBounds(livingEnemies);
   if (bounds.minX <= 16 || bounds.maxX >= WORLD.width - 16) {
+    const correction = bounds.minX <= 16
+      ? 16 - bounds.minX
+      : (WORLD.width - 16) - bounds.maxX;
+
     formation.direction *= -1;
     for (const enemy of livingEnemies) {
+      enemy.x += correction;
       enemy.baseY += formation.drop;
       enemy.y += formation.drop;
     }
@@ -1110,6 +1115,7 @@ renderDiploma({
 });
 syncHud();
 render();
+
 
 
 
