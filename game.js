@@ -77,6 +77,8 @@ const state = {
   shields: [],
   formation: null,
   lastDiplomaRecord: null,
+  stageIntroGrace: 0,
+  lastDefeatReason: null,
   audio: {
     ctx: null,
     enabled: false
@@ -258,6 +260,8 @@ function buildStage(stageNumber) {
     }
   }
 
+  state.stageIntroGrace = 0.9;
+  state.lastDefeatReason = null;
   stageValue.textContent = stageNumber + " / 10";
   statusLine.textContent = "Stage " + stageNumber + ": " + cfg.desc;
 }
@@ -277,6 +281,7 @@ function resetCampaign() {
   state.shotsHit = 0;
   state.enemiesDestroyed = 0;
   state.lastDiplomaRecord = null;
+  state.lastDefeatReason = null;
   state.mode = "playing";
   introOverlay.classList.add("hidden");
   stageOverlay.classList.add("hidden");
@@ -312,6 +317,7 @@ function loop(now) {
 function update(dt) {
   updateStars(dt);
   updateParticles(dt);
+  state.stageIntroGrace = Math.max(0, state.stageIntroGrace - dt);
 
   if (state.mode !== "playing") {
     return;
@@ -445,6 +451,7 @@ function hitPlayer() {
   syncHud();
 
   if (state.lives <= 0) {
+    state.lastDefeatReason = "player-destroyed";
     finishCampaign(false);
     return;
   }
@@ -499,7 +506,10 @@ function updateEnemies(dt) {
     }
   }
 
-  if (livingEnemies.some((enemy) => enemy.y + enemy.height >= getBaseLineY())) {
+  const lowestEnemyBottom = Math.max(...livingEnemies.map((enemy) => enemy.y + enemy.height));
+  if (state.stageIntroGrace <= 0 && lowestEnemyBottom >= getBaseLineY()) {
+    state.lastDefeatReason = "citadel-breached";
+    console.warn("Campaign ended", { reason: state.lastDefeatReason, stage: state.stage, lives: state.lives, lowestEnemyBottom, baseline: getBaseLineY(), grace: state.stageIntroGrace });
     finishCampaign(false);
     return;
   }
@@ -1100,6 +1110,9 @@ renderDiploma({
 });
 syncHud();
 render();
+
+
+
 
 
 
