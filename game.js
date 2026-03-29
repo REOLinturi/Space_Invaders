@@ -53,9 +53,9 @@ const levelConfigs = [
   { rows: 5, cols: 8, enemySpeed: 88, drop: 22, fireDelay: 1.2, bulletSpeed: 270, enemySize: 24, move: "sway", shields: 3, maxShots: 2, scoreBase: 36, desc: "More hulls, fewer shields, faster punishment." },
   { rows: 5, cols: 9, enemySpeed: 104, drop: 22, fireDelay: 1.05, bulletSpeed: 292, enemySize: 24, move: "dive", shields: 3, maxShots: 3, scoreBase: 40, desc: "Raiders peel off and dive toward your lane." },
   { rows: 5, cols: 9, enemySpeed: 120, drop: 24, fireDelay: 0.95, bulletSpeed: 312, enemySize: 22, move: "dive", shields: 2, maxShots: 3, scoreBase: 46, desc: "Dive attacks intensify, and bullets travel harder." },
-  { rows: 6, cols: 9, enemySpeed: 136, drop: 24, fireDelay: 0.88, bulletSpeed: 332, enemySize: 22, move: "zigzag", shields: 2, maxShots: 3, scoreBase: 52, desc: "Dense assault wings zigzag across the sky." },
-  { rows: 6, cols: 10, enemySpeed: 154, drop: 26, fireDelay: 0.8, bulletSpeed: 352, enemySize: 20, move: "zigzag", shields: 1, maxShots: 4, scoreBase: 58, desc: "Almost no shelter remains. The fleet crowds the field." },
-  { rows: 6, cols: 10, enemySpeed: 174, drop: 28, fireDelay: 0.72, bulletSpeed: 375, enemySize: 20, move: "storm", shields: 1, maxShots: 5, scoreBase: 66, desc: "Final storm. Maximum speed, crossfire, and relentless descent." }
+  { rows: 6, cols: 9, enemySpeed: 128, drop: 22, fireDelay: 0.94, bulletSpeed: 322, enemySize: 22, move: "zigzag", shields: 2, maxShots: 3, scoreBase: 52, desc: "Dense assault wings zigzag across the sky." },
+  { rows: 6, cols: 10, enemySpeed: 144, drop: 24, fireDelay: 0.86, bulletSpeed: 340, enemySize: 20, move: "zigzag", shields: 1, maxShots: 4, scoreBase: 58, desc: "Almost no shelter remains. The fleet crowds the field." },
+  { rows: 6, cols: 10, enemySpeed: 156, drop: 24, fireDelay: 0.8, bulletSpeed: 352, enemySize: 20, move: "storm", shields: 1, maxShots: 4, scoreBase: 66, desc: "Final storm. Maximum speed, crossfire, and a narrow margin for error." }
 ];
 
 const state = {
