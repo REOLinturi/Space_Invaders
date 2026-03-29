@@ -30,6 +30,21 @@ const stars = Array.from({ length: 140 }, () => ({
   size: Math.random() * 2 + 0.8
 }));
 
+const SHIELD_PATTERN = [
+  "     ##########     ",
+  "   ##############   ",
+  "  ################  ",
+  " ################## ",
+  "####################",
+  "####################",
+  "####################",
+  "########    ########",
+  "#######      #######",
+  "######        ######",
+  "#####          #####"
+];
+const SHIELD_CELL_SIZE = 4;
+
 const levelConfigs = [
   { rows: 3, cols: 6, enemySpeed: 45, drop: 16, fireDelay: 1.8, bulletSpeed: 205, enemySize: 28, move: "march", shields: 4, maxShots: 1, scoreBase: 20, desc: "The scouts arrive slowly. Learn the rhythm." },
   { rows: 3, cols: 7, enemySpeed: 56, drop: 18, fireDelay: 1.6, bulletSpeed: 225, enemySize: 28, move: "march", shields: 4, maxShots: 1, scoreBase: 24, desc: "Wider formation, quicker step, tighter firing windows." },
@@ -95,23 +110,109 @@ function createPlayer() {
   };
 }
 
+function createShieldMask() {
+  return SHIELD_PATTERN.map((row) => [...row].map((cell) => cell === "#"));
+}
+
+function countShieldCells(mask) {
+  let total = 0;
+  for (const row of mask) {
+    for (const cell of row) {
+      if (cell) {
+        total += 1;
+      }
+    }
+  }
+  return total;
+}
+
 function createShields(count) {
   if (!count) {
     return [];
   }
 
   const shields = [];
+  const width = SHIELD_PATTERN[0].length * SHIELD_CELL_SIZE;
+  const height = SHIELD_PATTERN.length * SHIELD_CELL_SIZE;
   const gap = WORLD.width / (count + 1);
   for (let i = 0; i < count; i += 1) {
+    const mask = createShieldMask();
     shields.push({
-      x: gap * (i + 1) - 40,
+      x: gap * (i + 1) - width / 2,
       y: WORLD.height - 174,
-      width: 80,
-      height: 44,
-      health: 14
+      width,
+      height,
+      cellSize: SHIELD_CELL_SIZE,
+      mask,
+      cellsAlive: countShieldCells(mask)
     });
   }
   return shields;
+}
+
+function shieldHasCells(shield) {
+  return shield.cellsAlive > 0;
+}
+
+function findShieldImpact(shield, bullet) {
+  if (!shieldHasCells(shield) || !overlaps(bullet, shield)) {
+    return null;
+  }
+
+  const cellSize = shield.cellSize;
+  const startCol = Math.max(0, Math.floor((bullet.x - shield.x) / cellSize));
+  const endCol = Math.min(shield.mask[0].length - 1, Math.floor((bullet.x + bullet.width - shield.x) / cellSize));
+  const startRow = Math.max(0, Math.floor((bullet.y - shield.y) / cellSize));
+  const endRow = Math.min(shield.mask.length - 1, Math.floor((bullet.y + bullet.height - shield.y) / cellSize));
+
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let col = startCol; col <= endCol; col += 1) {
+      if (!shield.mask[row][col]) {
+        continue;
+      }
+
+      const cellRect = {
+        x: shield.x + col * cellSize,
+        y: shield.y + row * cellSize,
+        width: cellSize,
+        height: cellSize
+      };
+      if (overlaps(bullet, cellRect)) {
+        return {
+          x: bullet.x + bullet.width / 2,
+          y: bullet.y + bullet.height / 2
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+function erodeShield(shield, impactX, impactY, radiusX, radiusY) {
+  let removed = 0;
+  const cellSize = shield.cellSize;
+
+  for (let row = 0; row < shield.mask.length; row += 1) {
+    for (let col = 0; col < shield.mask[row].length; col += 1) {
+      if (!shield.mask[row][col]) {
+        continue;
+      }
+
+      const centerX = shield.x + col * cellSize + cellSize / 2;
+      const centerY = shield.y + row * cellSize + cellSize / 2;
+      const dx = (centerX - impactX) / radiusX;
+      const dy = (centerY - impactY) / radiusY;
+
+      if (dx * dx + dy * dy <= 1) {
+        shield.mask[row][col] = false;
+        removed += 1;
+      }
+    }
+  }
+
+  shield.cellsAlive = Math.max(0, shield.cellsAlive - removed);
+  return removed;
 }
 
 function buildStage(stageNumber) {
@@ -303,11 +404,12 @@ function handleBulletCollisions() {
     }
 
     for (const shield of state.shields) {
-      if (!shield.health || !overlaps(bullet, shield)) {
+      const impact = findShieldImpact(shield, bullet);
+      if (!impact) {
         continue;
       }
       bullet.spent = true;
-      shield.health = Math.max(0, shield.health - 2);
+      erodeShield(shield, impact.x, impact.y + 5, 10, 11);
       spawnBurst(bullet.x, bullet.y, "#ffcf5a", 6);
       break;
     }
@@ -315,11 +417,12 @@ function handleBulletCollisions() {
 
   for (const bullet of state.enemyBullets) {
     for (const shield of state.shields) {
-      if (!shield.health || !overlaps(bullet, shield)) {
+      const impact = findShieldImpact(shield, bullet);
+      if (!impact) {
         continue;
       }
       bullet.spent = true;
-      shield.health = Math.max(0, shield.health - 1);
+      erodeShield(shield, impact.x, impact.y - 5, 10, 11);
       spawnBurst(bullet.x, bullet.y, "#ff6b6b", 5);
       break;
     }
@@ -668,13 +771,26 @@ function drawBullets() {
 
 function drawShields() {
   for (const shield of state.shields) {
-    if (!shield.health) {
+    if (!shieldHasCells(shield)) {
       continue;
     }
-    const ratio = shield.health / 14;
-    ctx.fillStyle = "rgba(127, 255, 212, " + (0.2 + ratio * 0.55) + ")";
-    ctx.fillRect(shield.x, shield.y, shield.width, shield.height);
-    ctx.clearRect(shield.x + shield.width * 0.32, shield.y + shield.height * 0.5, shield.width * 0.36, shield.height * 0.5);
+
+    for (let row = 0; row < shield.mask.length; row += 1) {
+      for (let col = 0; col < shield.mask[row].length; col += 1) {
+        if (!shield.mask[row][col]) {
+          continue;
+        }
+
+        const alpha = 0.36 + (row / shield.mask.length) * 0.32;
+        ctx.fillStyle = "rgba(127, 255, 212, " + alpha + ")";
+        ctx.fillRect(
+          shield.x + col * shield.cellSize,
+          shield.y + row * shield.cellSize,
+          shield.cellSize - 0.5,
+          shield.cellSize - 0.5
+        );
+      }
+    }
   }
 }
 
@@ -984,5 +1100,6 @@ renderDiploma({
 });
 syncHud();
 render();
+
 
 
