@@ -1,0 +1,64 @@
+{
+  "sectors": [
+    {
+      "brief": "Sector Kestrel Station. The formation marches steadily. Follow its lead, fire into its path, and leave room to turn safely.",
+      "damage": "Last life warning: careful now, one hit ends your run. Use cover wisely and stay alert.",
+      "aim": "Low accuracy? Focus fire on the leading enemy column; predict their march and shoot ahead.",
+      "debrief": "Kestrel Station challenged our timing. Movement synchronized with fire is critical to hold the line."
+    },
+    {
+      "brief": "Ochre Narrows incoming march. Slice through an outer column to increase the formation's journey to the hull.",
+      "damage": "Warning: final life. Avoid reckless exposure; sustainment depends on shield use and careful shooting.",
+      "aim": "Aim to cut through edges, not centers. Hitting outer ranks delays their advance effectively.",
+      "debrief": "Ochre Narrows tested our positioning. Breaking columns early slowed mass pressure on defense."
+    },
+    {
+      "brief": "Approaching Beacon Field. Gaps between bolts open momentary escape corridors. Move through one gap at a time.",
+      "damage": "One hull life left. Avoid random shots; prioritize clean movements through intervals in fire.",
+      "aim": "Track bolt intervals and shift precisely. Fire timing aligns with navigating gaps safely.",
+      "debrief": "Beacon Field's bolt gaps gave us tactical openings. Precision and timing remain crucial this far."
+    },
+    {
+      "brief": "Meridian Yard sway pattern detected. Hold a clear lane as ranks cross your fire zone steadily.",
+      "damage": "Final hull life left. Defense relies on consistent fire through established lanes, maintain composure.",
+      "aim": "Swaying ranks mean predictable paths. Fire continuously through the lane as enemies cross steadily.",
+      "debrief": "Meridian Yard's sway forced steady discipline. Clear firing lanes create sustained damage opportunities."
+    },
+    {
+      "brief": "Ash Basin sway continues. Thin the lowest ranks before they breach shields using firing openings in cover.",
+      "damage": "One life remaining. Prioritize suppression of lowest ranks to protect shields from breach.",
+      "aim": "Fire through shield gaps aimed low. Suppressing bottom ranks delays formation's advance effectively.",
+      "debrief": "Ash Basin exposed vulnerabilities at the base line. Focused suppression prevented critical breaches."
+    },
+    {
+      "brief": "The Downwell dive tactics ahead. Raiders break formation flying out. Observe formation before each shot.",
+      "damage": "Last life caution: dive maneuvers increase unpredictability. Watch formation flow before engaging.",
+      "aim": "Track diving raiders then scan formation behind. Aim where moving targets regroup for best results.",
+      "debrief": "Downwell's diving forces fractured enemy flow. Adapting targeting kept defense sustained under pressure."
+    },
+    {
+      "brief": "Copper Spine dive phase continues. Between dives, follow the outer column and create space at the wall.",
+      "damage": "Final life alert. Stay mobile along the edge and keep fire disrupting outer column advances.",
+      "aim": "Between dives, track outermost enemies. Control space on the flank to slow formation progress.",
+      "debrief": "Copper Spine demands flank control. Maintaining outer spacing eased formation pressure on hull."
+    },
+    {
+      "brief": "Terminus Array uses zigzag advances. Aim ahead of their path; short sidesteps allow timely multiple shots.",
+      "damage": "One hull life left. Zigzag movement tests your timing; avoid overcommitment in sidesteps.",
+      "aim": "Predict lateral zig and aim where targets will be; coordinate side moves with firing cadence.",
+      "debrief": "Terminus Array's zigzag required anticipatory aiming. Timing and projection of shots prevented incursions."
+    },
+    {
+      "brief": "Nightfall Cut zigzag pattern noted. Use last shield to endure crossfire; clear edges to safely shoot back.",
+      "damage": "Last life standing. Shield timing is critical to survive crossfire; reposition immediately after use.",
+      "aim": "Use shield cover then quickly clear margins; fire when crossfire has passed to maximize hit chances.",
+      "debrief": "Nightfall Cut tested shield timing and positioning. Proper cover usage allowed effective retaliation."
+    },
+    {
+      "brief": "Final sector Cinder Reach storm advance. Persistently fire at lowest ranks and keep sideways path clear for volleys.",
+      "damage": "Final life. Consistent suppression is key; avoid crowding path to enable responsive volleys.",
+      "aim": "Focus on lowest rows; maintain lateral mobility for prompt adjustment to consecutive salvoes.",
+      "debrief": "The Cinder Reach storm required relentless pressure and spatial control. Momentum depends on tactical firing and movement."
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+[
+  {"name":"Kestrel Station","move":"march","hint":"Follow the leading column. Fire into its path and leave room to turn."},
+  {"name":"Ochre Narrows","move":"march","hint":"Cut through an outer column to give the formation a longer trip to the wall."},
+  {"name":"Beacon Field","move":"march","hint":"Watch the gaps between incoming bolts. Move through one gap at a time."},
+  {"name":"Meridian Yard","move":"sway","hint":"The ranks sway across your sights. Hold a clear lane and let them cross your fire."},
+  {"name":"Ash Basin","move":"sway","hint":"Thin the lowest ranks before they reach your shields. Fire through an opening in the cover."},
+  {"name":"The Downwell","move":"dive","hint":"Raiders can dive out of line. Watch the formation behind them when choosing your next shot."},
+  {"name":"Copper Spine","move":"dive","hint":"Between dives, follow the outermost column and open up space along the wall."},
+  {"name":"Terminus Array","move":"zigzag","hint":"Aim ahead of the zigzag. Short sidesteps leave you time to fire again."},
+  {"name":"Nightfall Cut","move":"zigzag","hint":"Use the last shield while the crossfire passes. Move clear of its edge to shoot."},
+  {"name":"Cinder Reach","move":"storm","hint":"Keep firing into the lowest ranks. Save a clear path sideways for the next volley."}
+]

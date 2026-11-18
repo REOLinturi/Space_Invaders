@@ -1,99 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Starward Defenders</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <main class="shell">
-    <header class="titlebar">
-      <div>
-        <h1 class="title">Starward Defenders</h1>
-        <p class="subtitle">A browser tribute to the 1970s arcade invasion, rebuilt with 10 escalating stages.</p>
-      </div>
-      <button id="startButton" type="button">Start Mission</button>
-    </header>
-
-    <section class="hud">
-      <article class="card">
-        <span class="label">Score</span>
-        <span class="value" id="scoreValue">0</span>
-      </article>
-      <article class="card">
-        <span class="label">Stage</span>
-        <span class="value" id="stageValue">1 / 10</span>
-      </article>
-      <article class="card">
-        <span class="label">Lives</span>
-        <span class="value" id="livesValue">3</span>
-      </article>
-      <article class="card">
-        <span class="label">Best</span>
-        <span class="value" id="bestValue">0</span>
-      </article>
-    </section>
-
-    <section class="arena">
-      <canvas id="gameCanvas" width="900" height="600" aria-label="Space shooter playfield"></canvas>
-
-      <div class="overlay" id="introOverlay">
-        <div class="panel">
-          <h2>Hold The Sky</h2>
-          <p>
-            Move your starfighter, break incoming formations, and survive ten increasingly aggressive waves.
-            Each stage adds pressure through faster ranks, denser fleets, sharper enemy fire, and less room for mistakes.
-          </p>
-          <div class="pill-row">
-            <span class="pill">Move: Arrow Keys / A D</span>
-            <span class="pill">Fire: Space</span>
-            <span class="pill">Touch: On-screen controls</span>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111515" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 42'%3E%3Cpath fill='%23ffad6b' d='M24 1 46 39 25 31 2 40Zm0 10L13 31l12-5 10 4Z'/%3E%3C/svg%3E"
+    />
+    <title>Cinder Reach | Starward Defenders</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="mast">
+        <h1>
+          <svg viewBox="0 0 48 42" aria-hidden="true">
+            <path d="M24 1 46 39 25 31 2 40Zm0 10L13 31l12-5 10 4Z" fill="currentColor" /></svg
+          >Starward <span>Defenders</span>
+        </h1>
+        <button class="utility" id="soundButton" type="button" aria-pressed="true">Sound on</button>
+      </header>
+      <section class="console" aria-label="Flight console">
+        <div class="flightbar">
+          <span class="on-air"><i></i> Orbital defense</span><span id="sectorName">Kestrel Station</span>
+        </div>
+        <div class="arena" id="arena">
+          <canvas id="skyCanvas" aria-hidden="true"></canvas>
+          <canvas id="gameCanvas" width="900" height="600" aria-label="Arcade defense playfield"></canvas>
+          <canvas id="worldCanvas" aria-label="Three-dimensional defense playfield" hidden></canvas>
+          <div class="overlay hero" id="introOverlay">
+            <div class="hero-text">
+              <p class="eyebrow">Operation / 01&ndash;10</p>
+              <h2>Cinder<br /><em>Reach.</em></h2>
+              <p>Hold the orbital line. Ten hostile waves stand between your interceptor and a clear sky.</p>
+              <button id="launchButton" class="primary" type="button">
+                Launch mission <b aria-hidden="true">&#8599;</b>
+              </button>
+            </div>
+            <span class="ship-id">KX&ndash;4 &nbsp; / &nbsp; Interceptor</span>
           </div>
-          <div class="actions">
-            <button id="launchButton" type="button">Launch</button>
+          <div class="overlay hidden modal" id="stageOverlay">
+            <div class="panel">
+              <span class="eyebrow">Flight control</span>
+              <h2 id="stageOverlayTitle"></h2>
+              <p id="stageOverlayText"></p>
+              <button id="continueButton" class="primary" type="button">Enter next sector &#8599;</button>
+            </div>
+          </div>
+          <div class="overlay hidden modal" id="diplomaOverlay">
+            <div class="panel diploma">
+              <span class="eyebrow">Flight record</span>
+              <h2>Defense Academy Diploma</h2>
+              <p id="diplomaMessage"></p>
+              <strong id="rankValue"></strong>
+              <canvas id="diplomaCanvas" width="960" height="640" aria-label="Illustrated diploma"></canvas>
+              <div id="diplomaMetrics"></div>
+              <p id="copyStatus" role="status"></p>
+              <div class="actions">
+                <button id="restartButton" type="button" class="primary">Fly again</button
+                ><button id="copyButton" type="button">Copy diploma image</button>
+              </div>
+            </div>
           </div>
         </div>
+        <div class="hud">
+          <div><span>Wave</span><strong id="stageValue">1 / 10</strong></div>
+          <div><span>Score</span><strong id="scoreValue">0</strong></div>
+          <div><span>Hull lives</span><strong id="livesValue">3</strong></div>
+          <div><span>Personal best</span><strong id="bestValue">0</strong></div>
+        </div>
+      </section>
+      <div class="touch-controls" aria-label="Flight controls">
+        <button id="leftButton" aria-label="Move left">&#8592;</button><button id="fireButton">Fire</button
+        ><button id="rightButton" aria-label="Move right">&#8594;</button>
       </div>
-
-      <div class="overlay hidden" id="stageOverlay">
-        <div class="panel">
-          <h2 id="stageOverlayTitle">Stage Cleared</h2>
-          <p id="stageOverlayText"></p>
-          <div class="actions">
-            <button id="continueButton" type="button">Continue</button>
+      <aside class="radio">
+        <div class="radio-title">
+          <span class="waves" aria-hidden="true">&#9614;&#9616;&#9612;</span>
+          <div>
+            <span class="eyebrow" id="radioSource">Onboard archive</span>
+            <h2>Flight control</h2>
           </div>
         </div>
-      </div>
-
-      <div class="overlay hidden" id="diplomaOverlay">
-        <div class="panel diploma">
-          <h2>Defense Academy Diploma</h2>
-          <p id="diplomaMessage">Your campaign has concluded.</p>
-          <div class="rank" id="rankValue">Cadet</div>
-          <canvas id="diplomaCanvas" width="960" height="640" aria-label="Diploma artwork"></canvas>
-          <div class="diploma-metrics" id="diplomaMetrics"></div>
-          <p class="copy-status" id="copyStatus">Generate a record and copy the diploma image to share it.</p>
-          <div class="actions">
-            <button id="restartButton" type="button">Play Again</button>
-            <button id="copyButton" type="button" class="secondary">Copy Diploma Image</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="touch-controls" aria-label="Touch controls">
-      <button id="leftButton" type="button">Left</button>
-      <button id="fireButton" type="button" class="secondary">Fire</button>
-      <button id="rightButton" type="button">Right</button>
-    </section>
-
-    <footer class="footerbar">
-      <span id="statusLine">Press Start Mission to begin the defense.</span>
-      <span>Inspired by the timeless arcade march, rebuilt as an original tribute.</span>
-    </footer>
-  </main>
-
-  <script src="game.js"></script>
-</body>
+        <p id="radioText" aria-live="polite">
+          Kestrel Station is on your frequency. Request a briefing before launch.
+        </p>
+        <button id="intelButton" class="utility" type="button">Request briefing &#8599;</button>
+      </aside>
+      <footer>
+        <span id="statusLine">Flight deck ready.</span
+        ><span><kbd>A</kbd> <kbd>D</kbd> Move &nbsp; <kbd>Space</kbd> Fire</span>
+      </footer>
+    </main>
+    <script src="radio.js"></script>
+    <script src="game.js"></script>
+    <script type="module" src="world.js"></script>
+  </body>
 </html>

@@ -265,6 +265,7 @@ function buildStage(stageNumber) {
   state.lastDefeatReason = null;
   stageValue.textContent = stageNumber + " / 10";
   statusLine.textContent = "Stage " + stageNumber + ": " + cfg.desc;
+  flightRadio.reset(state);
 }
 
 function syncHud() {
@@ -326,7 +327,9 @@ function update(dt) {
 
   updatePlayer(dt);
   updateBullets(dt);
+  if (state.mode !== "playing") return;
   updateEnemies(dt);
+  if (state.mode !== "playing") return;
   checkStageState();
   syncHud();
 }
@@ -595,6 +598,7 @@ function checkStageState() {
   stageOverlayTitle.textContent = "Stage " + state.stage + " Cleared";
   stageOverlayText.textContent = "Score locked at " + state.score + ". Next: Stage " + (state.stage + 1) + ". " + levelConfigs[state.stage].desc;
   stageOverlay.classList.remove("hidden");
+  flightRadio.reset(state);
   statusLine.textContent = "Stage " + state.stage + " cleared.";
   playSound("stageClear");
 }
@@ -628,7 +632,7 @@ function finishCampaign(victory) {
 
   diplomaMessage.textContent = victory
     ? "All ten stages held. The academy recognizes your defense record."
-    : "The citadel fell during stage " + state.stage + ". Your campaign record has been archived.";
+    : (state.lastDefeatReason === "citadel-breached" ? "The formation crossed the defense line" : "Your last interceptor was lost") + " in wave " + state.stage + ".";
   rankValue.textContent = rank;
   diplomaMetrics.replaceChildren();
 
@@ -643,6 +647,7 @@ function finishCampaign(victory) {
   }
 
   state.lastDiplomaRecord = { victory, accuracy, stageReached, rank, metrics };
+  flightRadio.reset(state);
   renderDiploma(state.lastDiplomaRecord);
   copyStatus.textContent = "Diploma image ready. Use Copy Diploma Image to place it on your clipboard.";
   diplomaOverlay.classList.remove("hidden");
@@ -699,6 +704,10 @@ function overlaps(a, b) {
 }
 
 function render() {
+  if (window.drawFlightWorld) {
+    window.drawFlightWorld(state, performance.now() / 1000, Number(keys.right || pointer.right) - Number(keys.left || pointer.left));
+    return;
+  }
   ctx.clearRect(0, 0, WORLD.width, WORLD.height);
   drawStars();
   drawCitadel();
@@ -995,7 +1004,7 @@ function ensureAudio() {
 }
 
 function tone(freq, type, duration, gainValue, startOffset, slideTo) {
-  if (!state.audio.enabled || !state.audio.ctx) {
+  if (!state.audio.enabled || !state.audio.ctx || state.audio.muted) {
     return;
   }
 
@@ -1077,6 +1086,7 @@ async function copyDiplomaImage() {
 }
 
 document.addEventListener("keydown", (event) => {
+  if (state.mode !== "playing" || (event.code === "Space" && event.target.closest?.("button"))) return;
   if (event.code === "ArrowLeft" || event.code === "KeyA") {
     keys.left = true;
   }
@@ -1111,7 +1121,20 @@ function startGame() {
   startLoop();
 }
 
-document.getElementById("startButton").addEventListener("click", startGame);
+document.getElementById("soundButton").addEventListener("click", (event) => {
+  state.audio.muted = !state.audio.muted;
+  event.currentTarget.textContent = state.audio.muted ? "Sound off" : "Sound on";
+  event.currentTarget.setAttribute("aria-pressed", String(!state.audio.muted));
+  event.currentTarget.blur();
+  if (!state.audio.muted) { ensureAudio(); playSound("stageClear"); }
+});
+window.addEventListener("blur", () => {
+  for (const key of Object.keys(keys)) keys[key] = pointer[key] = false;
+});
+document.getElementById("intelButton").addEventListener("click", event => {
+  event.currentTarget.blur();
+  flightRadio.request(state);
+});
 document.getElementById("launchButton").addEventListener("click", startGame);
 document.getElementById("continueButton").addEventListener("click", advanceStage);
 document.getElementById("restartButton").addEventListener("click", startGame);
@@ -1128,6 +1151,7 @@ renderDiploma({
 });
 syncHud();
 render();
+startLoop();
 
 
 
